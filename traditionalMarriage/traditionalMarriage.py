@@ -51,25 +51,48 @@ class Woman(Person):
                 return preferred_man
 
     def getRejectedMen(self, chosen_man):
-        self.man_list.remove(chosen_man)
-        return self.man_list
+        # Get the men that the woman didn't choose each night so they can be rejected
+        rejected_men = self.man_list[:]
+        rejected_men.remove(chosen_man)
+        return rejected_men
 
     def clearManList(self):
+        # We need to reset the list of men visiting after every iteration
         self.man_list = []
 
-def traditionalMarriage(n):
+def initializePeople(n):
     # Initialize arrays of men and women
     men = [Man(i, n) for i in range(n)]
     women = [Woman(i, n) for i in range(n)]
-    nights = 0 # counter for number of nights
-    
+    return (men,women)
+
+def traditionalMarriage(men, women):
+    # Implementation of the algorithm. Takes in arrays of men and women, and
+    # returns the arrays with married pairs.
+    if len(men) != len(women):
+        print("We need the same number of men and women!")
+    nights = 0
     # Iterate until each woman has exactly one man visiting them.
-    while all(len(woman.getManList()) != 1 for woman in women):
-        for woman in women:
-            woman.clearManList()
-        visitIteration(men, women)
-    
-def visitIteration(men_array, women_array):
+    while True:
+        if all(len(woman.getManList()) == 1 for woman in women):
+            print("Matching took " + str(nights) + " nights!")
+            break
+        else:
+            nightIteration(men, women)
+            nights += 1
+            print(str(nights) + " nights have passed!")
+
+def nightIteration(men_array, women_array):
+    # Function for each night that passes
+    # Note: This is VERY inefficient due to the number of nested for loops -
+    # Although I've decided to keep them in because they will help with
+    # visualization later - a good representation for how we might compute the
+    # algorithm by hand. I tried this with 10000 people and it crashed my
+    #laptop. If you'd like to optimize this, change it later - we can probably
+    # improve it using numpy and matrix algebra!
+    for woman in women_array:
+        woman.clearManList()
+
     for man in men_array:
         print("Man " + str(man.getIdentity()) + " has the preferences " + ','.join([str(i) for i in man.getRemainingPreferences()]) + ".")
         favourite_woman = man.getRemainingPreferences()[0]
@@ -85,9 +108,6 @@ def visitIteration(men_array, women_array):
             rejected_men = woman.getRejectedMen(preferred_man)
             for rejected_man in rejected_men:
                 men_array[rejected_man].getRejected()
-        
 
-# Note: This is VERY inefficient due to the number of nested for loops - Although I've decided to keep them in because they will help with visualization later - a good representation for how we might compute the algorithm by hand. I tried this with 10000 people and it crashed my laptop. If you'd like to optimize this, change it later!
-
-
-traditionalMarriage(5)
+# The * here expands the tuple made by initializePairs() and sets them as arguments
+traditionalMarriage(*initializePeople(100))
