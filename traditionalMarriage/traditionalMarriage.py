@@ -12,7 +12,7 @@ class Person:
     def __init__(self, identity, n):
         # Representation of a person
         self.identity = identity
-        self.preferences = createPreferences(identity, n)
+        self.n = n
 
     def getIdentity(self):
         return self.identity
@@ -29,9 +29,26 @@ class Man(Person):
         # Representation of a man
         super().__init__(identity, n)
         self.remaining_preferences = copy.copy(self.preferences)
+        # set starting coordinates for visualization
+        self.row_position = 2 * n - 1
+        self.col_position = 2 * identity + 1
+
+    def getPosition(self):
+        return (self.row_position, self.col_position)
+
+    def updatePosition(self, new_row_position, new_col_position):
+        self.row_position = new_row_position
+        self.col_position = new_col_position
+
+    def resetPosition(self):
+        self.row_position = 2 * self.n - 1
+        self.col_position = 2 * self.identity + 1
 
     def getRemainingPreferences(self):
         return self.remaining_preferences
+
+    def setRemainingPreferences(self, input):
+        self.remaining_preferences = collections.deque(input)
 
     def getRejected(self):
         self.remaining_preferences.popleft() # time complexity O(1)
@@ -41,6 +58,14 @@ class Woman(Person):
         # Representation of a woman
         super().__init__(identity, n)
         self.man_list = []
+        self.row_position = 1
+        self.col_position = 2 * identity + 1
+
+    def setPreferences(self, input):
+        self.preferences = collections.deque(input)
+
+    def getPosition(self):
+        return (self.row_position, self.col_position)
 
     def getManList(self):
         return self.man_list
@@ -64,6 +89,7 @@ class Woman(Person):
         rejected_men = self.man_list[:]
         rejected_men.remove(chosen_man)
         return rejected_men
+
 
 def initializePeople(n):
     # Initialize arrays of men and women
@@ -112,5 +138,54 @@ def traditionalMarriage(men, women):
             nights += 1
             print(str(nights) + " nights have passed!")
 
-# The * here expands the tuple made by initializePairs() and sets them as arguments
-traditionalMarriage(*initializePeople(5))
+import numpy as np
+
+def updateWorld(men_array):
+    # Function to plot the world based on current positions of men
+    n = len(men_array)
+    world = np.zeros((2*n+1, 2*n+1))
+    # Fill in females
+    for i in range(1,2*n+1,2):
+            world[1, i]=0.7
+    # Fill in males
+    for man in men_array:
+        current_row_position = man.getPosition()[0]
+        current_col_position = man.getPosition()[1]
+        if world[current_row_position, current_col_position] > 0.7:
+            # Change the colour if there are men who reach the female tile.
+            world[current_row_position, current_col_position] += 0.08
+        elif world[current_row_position, current_col_position] == 0:
+            # Change the colour if a man steps on an empty tile.
+            world[current_row_position, current_col_position] = 0.3
+        else:
+            # Change the colour if two men step on the same tile.
+            world[current_row_position, current_col_position] += 0.1
+    return world
+    # Update the world based on the movement of the men
+
+# We'll represent our world as a numpy array.
+# This function creates a world full of zeroes, with a tile occupied by men represented by a 0.3 and
+# a tile occupied by a women represented by 0.7. The values are incremented if several people occupy
+# the same tile.
+
+# We need a function to show the men (bottom squares) moving to the corresponding top square!
+def moveMen(world, men_array, women_array):
+    for man in men_array:
+        current_row_position = man.getPosition()[0]
+        current_col_position = man.getPosition()[1]
+        favourite_woman = man.getRemainingPreferences()[0]
+        goal_row_position = women_array[favourite_woman].getPosition()[0]
+        goal_col_position = women_array[favourite_woman].getPosition()[1]
+
+        if current_col_position == goal_col_position and current_row_position == goal_row_position:
+            # Men will not move if they are in the same position as their desired partner.
+            pass
+        elif current_col_position == goal_col_position:
+             # Men will move vertically by one square if they are in the same column as their desired partner.
+            man.updatePosition(current_row_position - 1, current_col_position)
+        elif current_col_position > goal_col_position:
+            # Men will move horizontally if they are in the wrong column. Here they move to the left.
+            man.updatePosition(current_row_position, current_col_position - 1)
+        elif current_col_position < goal_col_position:
+            # Here they move to the right.
+            man.updatePosition(current_row_position, current_col_position + 1)
