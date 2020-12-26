@@ -13,6 +13,14 @@ class Person:
         # Representation of a person
         self.identity = identity
         self.n = n
+        self.partner_identity = None
+        self.preferences = createPreferences(identity, n)
+
+    def setPartnerIdentity(self, input):
+        self.partner_identity = input
+
+    def getPartnerIdentity(self):
+        return self.partner_identity
 
     def getIdentity(self):
         return self.identity
@@ -131,8 +139,19 @@ def traditionalMarriage(men, women):
     while True:
         if all(len(woman.getManList()) == 1 for woman in women):
             print("Matching took " + str(nights) + " nights!")
+            for woman in women:
+                woman.setPartnerIdentity(woman.getManList()[0])
+            for man in men:
+                man.setPartnerIdentity(man.getRemainingPreferences()[0])
             break
         else:
             nightIteration(men, women)
             nights += 1
             print(str(nights) + " nights have passed!")
+
+def checkStability(men, women):
+    for man in men:
+        for woman in women:
+            if man.getPreferences().index(man.getPartnerIdentity()) > man.getPreferences().index(woman.getIdentity()) and woman.getPreferences().index(woman.getPartnerIdentity()) > woman.getPreferences().index(man.getIdentity()):
+                return False
+    return True
