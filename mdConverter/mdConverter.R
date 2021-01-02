@@ -1,36 +1,33 @@
+library(knitr)
+library(brocks)
+library(stringr)
+
 setwd("c:/users/ethan/ethan-cheong.github.io")
-build_article <- function(filename) {
-  # set the base url so that it knows where to find stuff
-  knitr::opts_knit$set(base.url = "/")
+
+mdConverter <- function(file) {
+  # Create a directory for the files
+  directory.name <- str_remove_all(file, "[^A-Za-z\\-]")
   
-  # tell it that we'll be generating an md file
-  knitr::render_markdown()
-  
-  # generate a directory name, where we'll be storing the figures for it
-  d = gsub('^_|[.][a-zA-Z]+$', '', filename)
-  
-  # tell it where to store the figures and cache files
   knitr::opts_chunk$set(
-    fig.path   = sprintf('figure/%s/', d),
-    cache.path = sprintf('cache/%s/', d),
-    
-    # THIS IS CRITICAL! without this, it tries to take a screenshot instead of
-    # using the js/css files. It took me **a lot of time** to figure this out
+    fig.path   = sprintf('figure/%s/', directory.name),
+    cache.path = sprintf('cache/%s/', directory.name),
     screenshot.force = FALSE
   )
   
-  # this is the path to the original file. WARNING: I assume your .Rmd files are
-  # at /_source. If that's not the case, adjust this variable
-  source = paste0('_drafts/', filename, '.Rmd')
+  # Create directories
+  source.directory = paste0('_drafts/', file, '.Rmd')
+  output.directory = paste0('_posts/', file, '.md')
   
-  # this is where we want the md file
-  dest = paste0('_posts/', filename, '.md')
+  # Convert to md
+  knitr::render_markdown()
+  knitr::knit(input = source.directory, 
+              output = output.directory, 
+              quiet = TRUE, 
+              encoding = 'UTF-8', 
+              envir = .GlobalEnv)
   
-  # actually knit it!
-  knitr::knit(source, dest, quiet = TRUE, encoding = 'UTF-8', envir = .GlobalEnv)
-  
-  # store the dependencies where they belong
-  brocks::htmlwidgets_deps(source)
+  # store the dependencies
+  brocks::htmlwidgets_deps(source.directory)
 }
 
 build_article("2021-01-02-plotly-in-jekyll")
