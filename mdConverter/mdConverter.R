@@ -1,6 +1,8 @@
+# Include all the libraries you'll need for the visualization
 library(knitr)
 library(brocks)
 library(stringr)
+library(quantmod)
 
 setwd("c:/users/ethan/ethan-cheong.github.io")
 
@@ -30,4 +32,5 @@ mdConverter <- function(file) {
   brocks::htmlwidgets_deps(source.directory)
 }
 
-build_article("2021-01-02-plotly-in-jekyll")
+mdConverter("2021-01-02-visualizations-in-github-pages")
+
